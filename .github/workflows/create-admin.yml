@@ -20,7 +20,8 @@ jobs:
         working-directory: backend
         run: pip install -r requirements.txt
 
-      - name: Reset existing Toby password
+      
+      - name: Create FUD Django superuser
         working-directory: backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -39,9 +40,20 @@ jobs:
           user = User.objects.filter(**{field: 'toby'}).first()
 
           if user is None:
-              raise SystemExit('Account toby was not found in the configured database.')
+              user = User(**{field: 'toby'})
 
           user.set_password(os.environ['NEW_ADMIN_PASSWORD'])
+          user.is_staff = True
+          user.is_superuser = True
+          user.save()
+
+          if hasattr(user, 'role'):
+              user.role = 'platform_admin'
+              user.save()
+
+          print('FUD Django superuser created or updated successfully.')
+          "
+
           user.save()
           print('Password reset successfully for account toby.')
           "
