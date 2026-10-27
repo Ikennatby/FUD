@@ -20,12 +20,28 @@ jobs:
         working-directory: backend
         run: pip install -r requirements.txt
 
-      - name: Check Django configuration
+      - name: Reset existing Toby password
         working-directory: backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_DEBUG: "0"
           DJANGO_ALLOWED_HOSTS: fud-c0pq.onrender.com
-        run: python manage.py check
+          NEW_ADMIN_PASSWORD: ${{ secrets.NEW_ADMIN_PASSWORD }}
+        run: |
+          python manage.py shell -c "
+          import os
+          from django.contrib.auth import get_user_model
+
+          User = get_user_model()
+          field = User.USERNAME_FIELD
+          user = User.objects.filter(**{field: 'toby'}).first()
+
+          if user is None:
+              raise SystemExit('Account toby was not found in the configured database.')
+
+          user.set_password(os.environ['NEW_ADMIN_PASSWORD'])
+          user.save()
+          print('Password reset successfully for account toby.')
+          "
