@@ -42,17 +42,21 @@ export default function Nav() {
     return () => clearInterval(t);
   }, [auth, me?.notify_browser]);
 
-   if (router.pathname === "/" && !auth) return null; // the landing page has its own top bar
+  if (router.pathname === "/" && !auth) return null; // the landing page has its own top bar
+
   return (
     <>
       <header className="nav">
         <Link href="/" className="brand" aria-label="FÜD home"><Logo /></Link>
-        <nav>
+        <nav className="nav-links" aria-label="Main">
           <Link href="/">Menu</Link>
           <Link href="/recommend">Meal picks</Link>
           {auth?.role === "student" && <Link href="/orders">My orders</Link>}
           {auth?.role === "stall_admin" && <Link href="/stall">My stall</Link>}
+          {auth?.role === "stall_admin" && <Link href="/earnings">Track earnings</Link>}
           {auth?.role === "platform_admin" && <Link href="/admin">Admin</Link>}
+        </nav>
+        <nav className="nav-account" aria-label="Account">
           {auth ? (
             <>
               <Link href="/profile?tab=notifications" className="bell" aria-label={`Notifications, ${unread} unread`}>

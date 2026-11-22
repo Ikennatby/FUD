@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import account, extra, recovery, views
+from . import account, earnings, extra, recovery, views
 
 urlpatterns = [
     path("login/", views.LoginView.as_view()),
@@ -13,6 +13,7 @@ urlpatterns = [
     path("my-stall/", views.my_stall),
     path("my-stall/profile/", views.stall_profile),
     path("my-stall/payout/", extra.payout),
+    path("my-stall/earnings/", earnings.earnings),
     path("my-stall/items/<int:pk>/", extra.delete_item),
     path("banks/", extra.banks),
     # orders and payments

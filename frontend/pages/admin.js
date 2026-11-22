@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import CampusAdmin from "../components/CampusAdmin";
 import { fmtDate, fmtTime } from "../lib/status";
 
 export default function Admin() {
@@ -53,6 +54,7 @@ export default function Admin() {
       <h1>Admin</h1>
       {error && <p className="error">{error}</p>}
 
+       <CampusAdmin />
       <h2>Stall approvals</h2>
       <div className="stall">
         {stalls.length === 0 && <p className="muted">No stalls yet.</p>}

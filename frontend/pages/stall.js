@@ -103,55 +103,78 @@ export default function Stall() {
   if (error && !stall) return <p className="error">{error}</p>;
   if (!stall) return <p>Loading…</p>;
   return (
-    <section>
+    <section className="stall-page">
       <h1>{stall.name}</h1>
-      {!stall.approved && <p className="note">Waiting for approval. Students can't see your menu yet.</p>}
+      {!stall.approved && <p className="note">Waiting for approval. Students can&apos;t see your menu yet.</p>}
       {error && <p className="error">{error}</p>}
       {msg && <p className="ok">{msg}</p>}
 
-      <h2>Stall profile</h2>
-      <form className="stall form-grid" onSubmit={saveProfile}>
+      <form className="stall stack" onSubmit={saveProfile}>
+        <h2>Stall profile</h2>
         {stall.banner && <img className="stall-banner" src={media(stall.banner)} alt="Your stall banner" />}
         <div className="stall-head">
           <Pic src={media(stall.logo)} name={stall.name} size={64} round />
           <span className="muted">Campus: {stall.campus_name || "not set yet (ask the platform admin)"}</span>
         </div>
-        <label className="muted">Logo
+        <label className="field"><span className="field-title">Logo</span>
           <input key={`l${picKey}`} type="file" accept="image/*" onChange={(e) => setLogo(e.target.files[0] || null)} />
         </label>
-        <label className="muted">Banner
+        <label className="field"><span className="field-title">Banner</span>
           <input key={`b${picKey}`} type="file" accept="image/*" onChange={(e) => setBanner(e.target.files[0] || null)} />
         </label>
-        <label className="muted">Delivery fee (₦), charged once per order. Use 0 for free delivery.
-          <input type="number" min="0" value={fee} onChange={(e) => setFee(e.target.value)} />
+        <label className="field"><span className="field-title">Delivery fee (₦)</span>
+          <input type="number" inputMode="numeric" min="0" value={fee} onChange={(e) => setFee(e.target.value)} />
+          <small className="muted">Charged once per order. Use 0 for free delivery.</small>
         </label>
         <button>Save stall profile</button>
       </form>
 
-      <h2>Payouts</h2>
-      <p className={stall.payout_ready ? "ok" : "muted"}>{stall.payout_ready ? `Saved: ${stall.bank_name || "Bank account"} ending ${stall.account_last4 || "••••"}. To change it, choose a bank and enter a new number below.` : "Add your bank account. Students' payments go straight to it."}</p>
-      <form className="inline" onSubmit={saveBank}>
+      <form className="stall stack" onSubmit={saveBank}>
+        <h2>Payouts</h2>
+        <p className={stall.payout_ready ? "ok" : "muted"}>{stall.payout_ready ? `Saved: ${stall.bank_name || "Bank account"} ending ${stall.account_last4 || "••••"}. To change it, choose a bank and enter a new number below.` : "Add your bank account. Students' payments go straight to it."}</p>
         <select value={bank.bank_code} onChange={(e) => setBank({ ...bank, bank_code: e.target.value })}>
           <option value="">Choose your bank</option>
           {(banks.length ? banks : BANKS).map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
         </select>
-        <input placeholder="10-digit account number" value={bank.account_number} onChange={(e) => setBank({ ...bank, account_number: e.target.value })} />
+        <input inputMode="numeric" placeholder="10-digit account number" value={bank.account_number} onChange={(e) => setBank({ ...bank, account_number: e.target.value })} />
         <button>Save bank account</button>
       </form>
 
-      <h2>Menu</h2>
-      {stall.items.map((i) => <div key={i.id} className="row item-row"><Pic src={media(i.image)} name={i.name} size={48} /><span className="grow">{i.name} <span className="muted">{i.tags.join(", ")}</span></span><span className="price">{naira(i.price)}</span><button className="danger" onClick={() => removeItem(i.id, i.name)}>Delete</button></div>)}
-      <form onSubmit={addItem} style={{ margin: ".75rem 0 1.5rem" }}>
-        <div className="inline">
-          <input placeholder="Item name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-          <input placeholder="Price (₦)" type="number" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} />
-          <button>Add item</button>
-        </div>
-        <label className="muted">Picture of the food (shows on the menu and in orders)
+      <div className="stall">
+        <h2>Menu</h2>
+        {stall.items.length === 0 && <p className="muted">No items yet. Add your first one below.</p>}
+        {stall.items.map((i) => (
+          <div key={i.id} className="menu-row">
+            <Pic src={media(i.image)} name={i.name} size={52} />
+            <div className="menu-info">
+              <strong>{i.name}</strong>
+              {i.tags.length > 0 && <small className="muted">{i.tags.join(", ")}</small>}
+            </div>
+            <span className="price">{naira(i.price)}</span>
+            <button type="button" className="danger" onClick={() => removeItem(i.id, i.name)}>Delete</button>
+          </div>
+        ))}
+      </div>
+
+      <form className="stall stack" onSubmit={addItem}>
+        <h2>Add a menu item</h2>
+        <input placeholder="Item name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+        <input placeholder="Price (₦)" type="number" inputMode="numeric" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} />
+        <label className="field"><span className="field-title">Picture of the food</span>
           <input key={itemPicKey} type="file" accept="image/*" onChange={(e) => setItemPic(e.target.files[0] || null)} />
+          <small className="muted">Shows on the menu and in orders.</small>
         </label>
-        <p className="muted">Tags help students find the right meal:</p>
-        {TAGS.map((t) => <label key={t} style={{ marginRight: ".8rem" }}><input type="checkbox" checked={f.tags.includes(t)} onChange={() => toggleTag(t)} /> {t}</label>)}
+        <div className="field">
+          <span className="field-title">Tags help students find the right meal</span>
+          <div className="tag-grid">
+            {TAGS.map((t) => (
+              <label key={t} className={`tag-chip ${f.tags.includes(t) ? "on" : ""}`}>
+                <input type="checkbox" checked={f.tags.includes(t)} onChange={() => toggleTag(t)} /> {t}
+              </label>
+            ))}
+          </div>
+        </div>
+        <button>Add item</button>
       </form>
 
       <h2>Incoming orders</h2>
@@ -159,15 +182,17 @@ export default function Stall() {
       {orders.map((o) => (
         <div key={o.id} className="stall">
           <strong>{o.student}</strong> <span className="muted">· Order #{o.id} · {statusLabel(o)}</span>
-          {o.phone && <p>Phone: <a href={`tel:${o.phone}`}>{o.phone}</a></p>}
-          {o.pickup && <p>Collect at: {o.pickup}</p>}
+          {o.phone && <p className="break">Phone: <a href={`tel:${o.phone}`}>{o.phone}</a></p>}
+          {o.pickup && <p className="break">Collect at: {o.pickup}</p>}
           {o.lat != null && o.lng != null && <p><a href={mapsLink(o.lat, o.lng)} target="_blank" rel="noopener noreferrer">Open the student&apos;s location on the map</a></p>}
           {o.lines.map((l, i) => <div key={i} className="row item-row"><Pic src={media(l.image)} name={l.name} size={40} /><span className="grow">{l.qty} × {l.name}</span><span>{naira(l.qty * l.price)}</span></div>)}
           <div className="bill-line"><span>Food</span><span>{naira(o.subtotal)}</span></div>
           <div className="bill-line"><span>Delivery fee</span><span>{o.delivery_fee ? naira(o.delivery_fee) : "Free"}</span></div>
           <p className="total bill-total"><span>Total</span><span>{naira(o.total)}</span></p>
-          {NEXT[o.status] && <button onClick={() => advance(o.id, NEXT[o.status])}>{NEXT_LABEL[NEXT[o.status]]}</button>}
-          {!["completed", "cancelled"].includes(o.status) && <> <button className="danger" onClick={() => advance(o.id, "cancelled")}>Cancel order</button></>}
+          <div className="btn-row">
+            {NEXT[o.status] && <button onClick={() => advance(o.id, NEXT[o.status])}>{NEXT_LABEL[NEXT[o.status]]}</button>}
+            {!["completed", "cancelled"].includes(o.status) && <button className="danger" onClick={() => advance(o.id, "cancelled")}>Cancel order</button>}
+          </div>
         </div>
       ))}
     </section>

@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import EmailCode, Notification, Order, SupportMessage, SupportTicket, User
+from .models import Checkout, EmailCode, Notification, Order, SupportMessage, SupportTicket, User
 from .notify import check_code, notify, notify_admins, send_email, send_verification
 from .views import clean_phone, err, is_admin, order_json, valid_email
 
@@ -61,6 +61,9 @@ def delete_account(request):
         return err("You have orders in progress. Wait until they're finished or cancelled, then try again.")
     with transaction.atomic():
         Order.objects.filter(student=u, paid=False).delete()
+        Checkout.objects.filter(student=u, paid=False).delete()
+        Checkout.objects.filter(student=u).update(phone="", pickup="", lat=None, lng=None)
+        u.liked_stalls.all().delete()
         u.notifications.all().delete()
         u.tickets.all().delete()
         EmailCode.objects.filter(user=u).delete()
@@ -244,22 +247,25 @@ def announce(request):
         users = users.filter(notify_promos=True)
     in_app = emails = 0
     connection = get_connection()
-    for u in users[:500]:
-        Notification.objects.create(user=u, title=subject, body=message[:300])
-        in_app += 1
-        if u.email and u.email_verified and send_email(u.email, subject, [message], subject, connection=connection):
-            emails += 1
-    return Response({"in_app": in_app, "emails": emails})
+    for u in users.iterator():
+        if u.notify_inapp:
+            Notification.objects.create(user=u, title=subject, body=message[:300], link="/")
+            in_app += 1
+        if u.email and u.email_verified and u.notify_email:
+            # Reuse one connection; don't open a new SMTP connection for every user.
+            if send_email(u.email, subject, [message], subject, connection):
+                emails += 1
+    return Response({"ok": True, "in_app": in_app, "emails": emails})
 
 
-# ---------- download my data ----------
+# ---------- export personal data ----------
 @api_view(["GET"])
 def export(request):
     u = request.user
-    orders = Order.objects.filter(student=u).select_related("stall", "student").prefetch_related("lines__item")
-    tickets = u.tickets.select_related("user").prefetch_related("messages")
     return Response({
-        "account": me_json(u),
-        "orders": [order_json(o) for o in orders],
-        "support": [ticket_json(t) for t in tickets],
+        "profile": me_json(u),
+        "orders": [order_json(o) for o in Order.objects.filter(student=u).order_by("-created")],
+        "support": [ticket_json(t) for t in u.tickets.prefetch_related("messages").order_by("-created")],
+        "notifications": [{"title": n.title, "body": n.body, "created": n.created.isoformat()}
+                           for n in u.notifications.order_by("-created")],
     })
