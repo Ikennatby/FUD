@@ -22,4 +22,4 @@ media/
 # OS and editor files
 .DS_Store
 Thumbs.db
-.vscode/
+.vscode/backend/staticfiles/
