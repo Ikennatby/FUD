@@ -23,3 +23,7 @@ media/
 .DS_Store
 Thumbs.db
 .vscode/backend/staticfiles/
+
+media/
+staticfiles/
+*.sqlite3

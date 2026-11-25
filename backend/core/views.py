@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import timedelta
 
@@ -84,6 +85,8 @@ def pick_image(request, key):
         return None, ""
     if f.size > MAX_IMAGE:
         return None, "Pictures must be smaller than 3 MB."
+    if os.path.splitext(f.name)[1].lower() not in (".jpg", ".jpeg", ".png", ".webp", ".gif"):
+        return None, "Use a JPG, PNG, WebP or GIF picture."
     try:
         forms.ImageField().clean(f)  # makes sure it really is a picture (JPG, PNG, WebP, GIF)
     except ValidationError:
