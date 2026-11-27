@@ -26,4 +26,4 @@ Thumbs.db
 
 media/
 staticfiles/
-*.sqlite3
+*.sqlite3backend/staticfiles/
